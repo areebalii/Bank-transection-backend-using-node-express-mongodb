@@ -54,10 +54,41 @@ export const register = async (req, res) => {
   * - User login Controller
   * - POST /api/auth/login
 */
-export const login = async (req, res) => { 
+export const login = async (req, res) => {
   try {
-    
+    const { email, password } = req.body;
+
+    const user = await UserModel.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+    const isValidPassword = await user.comparePassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign({
+      userId: user._id
+    }, process.env.JWT_SECRET, { expiresIn: "3d" });
+    res.cookie("token", token, {
+      httpOnly: true, // Prevents client-side JS from reading the cookie (XSS protection)
+      secure: process.env.NODE_ENV === "production", // Forces HTTPS in production
+      sameSite: "strict", // Protects against CSRF attacks
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+    });
+
+    res.status(200).json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      message: "Login successful",
+      token
+    });
+
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 }
