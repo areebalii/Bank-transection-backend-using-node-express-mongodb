@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -18,7 +19,32 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is required"],
     minlength: [8, "Password must be at least 8 characters long"],
+    select: false,
   },
 }, {
   timestamps: true,
 })
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return;
+  }
+  try { 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(this.password, salt);
+    this.password = hashedPassword;
+
+    return;
+  } catch (err) {
+    console.error(err);
+  }
+
+});
+
+userSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+}
+
+const UserModel = mongoose.model("User", userSchema);
+
+export default UserModel;   
