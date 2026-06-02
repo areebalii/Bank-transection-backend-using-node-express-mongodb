@@ -5,6 +5,7 @@ const accountSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: [true, "account must be associated with a user"],
+    index: true,
   },
   status: {
     enum: {
@@ -20,6 +21,8 @@ const accountSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 })
+
+accountSchema.index({ user: 1, status: 1}) // Compound index to optimize queries filtering by user and status
 
 const AccountModel = mongoose.model("Account", accountSchema);
 
