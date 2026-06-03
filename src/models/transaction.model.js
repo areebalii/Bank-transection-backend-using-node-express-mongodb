@@ -34,6 +34,8 @@ const transactionSchema = new mongoose.Schema({
   },
 })
 
+
+
 const TransactionModel = mongoose.model("Transaction", transactionSchema);
 
 export default TransactionModel;

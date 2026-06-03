@@ -31,17 +31,17 @@ const transactionSchema = new mongoose.Schema({
   }
 })
 
-function preventNegativeBalance() {
-  throw new Error("ledger entry are immutable, cannot be updated after creation.");
+function preventLedgerModifications() {
+  throw new Error("ledger entry are immutable, cannot be modified or deleted after creation.");
 }
 
-ledgerSchema.pre("findOneAndUpdate", preventNegativeBalance);
-ledgerSchema.pre("updateOne", preventNegativeBalance);
-ledgerSchema.pre("updateMany", preventNegativeBalance);
-ledgerSchema.pre("update", preventNegativeBalance);
-ledgerSchema.pre("remove", preventNegativeBalance);
-ledgerSchema.pre("deleteOne", preventNegativeBalance);
-ledgerSchema.pre("deleteMany", preventNegativeBalance);
+ledgerSchema.pre("findOneAndUpdate", preventLedgerModifications);
+ledgerSchema.pre("updateOne", preventLedgerModifications);
+ledgerSchema.pre("updateMany", preventLedgerModifications);
+ledgerSchema.pre("update", preventLedgerModifications);
+ledgerSchema.pre("remove", preventLedgerModifications);
+ledgerSchema.pre("deleteOne", preventLedgerModifications);
+ledgerSchema.pre("deleteMany", preventLedgerModifications);
 
 const LedgerModel = mongoose.model("Ledger", transactionSchema);
 
