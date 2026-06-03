@@ -17,12 +17,10 @@ export const createTransaction = async (req, res) => {
     const fromUserAccount = await AccountModel.findOne({ _id: fromAccount });
     const toUserAccount = await AccountModel.findOne({ _id: toAccount });
 
-    // ✅ Bug 2 fixed: early return, nothing else inside this block
     if (!fromUserAccount || !toUserAccount) {
       return res.status(400).json({ message: "fromAccount or toAccount not found" });
     }
 
-    // ✅ Idempotency check is now properly reachable
     const isTransactionAlreadyExist = await TransactionModel.findOne({ idempotencyKey });
     if (isTransactionAlreadyExist) {
       if (isTransactionAlreadyExist.status === "COMPLETED") {
@@ -56,8 +54,7 @@ export const createTransaction = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    // ✅ Bug 3 fixed: destructure array returned by create()
-    const [transaction] = await TransactionModel.create([{
+    const transaction = await TransactionModel.create([{
       fromAccount,
       toAccount,
       amount,
@@ -122,7 +119,7 @@ export const createInitialFundsTransaction = async (req, res) => {
 
   if (!fromUserAccount) {
     return res.status(400).json({
-      message: "fromUserAccount not found"
+      message: "system user account not found"
     })
   }
 
