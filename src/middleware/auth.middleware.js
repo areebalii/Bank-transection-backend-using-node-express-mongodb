@@ -36,3 +36,49 @@ export const authMiddleware = async (req, res, next) => {
     }
   }
 }
+
+export const systemUserMiddleware = async (req, res, next) => {
+  try {
+    let token = req.cookies?.token;
+
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    // 1. Verify the Token
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 2. Fetch User and explicitly pull the systemUser boolean flag
+    const user = await UserModel.findById(decodedToken.userId).select("+systemUser");
+
+    // 3. FIX: Handle the edge case where the user document is missing
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized: User not found" });
+    }
+
+    // 4. Validate system authorization privileges
+    if (!user.systemUser) {
+      return res.status(403).json({ message: "Forbidden: Access denied for non-system user" });
+    }
+
+    // Attach user payload to request pipeline
+    req.user = user;
+    next();
+
+  } catch (error) {
+    console.error("System user check error:", error.message);
+
+    // Granular catch blocks for optimal frontend error tracking
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Unauthorized: Token expired" });
+    } else if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    } else {
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+};
