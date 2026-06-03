@@ -1,6 +1,7 @@
 import TransactionModel from "../models/transaction.model.js";
 import LedgerModel from "../models/ledger.model.js";
 import AccountModel from "../models/account.model.js";
+import mongoose from "mongoose";
 
 export const createTransaction = async (req, res) => {
   try {
@@ -68,6 +69,44 @@ export const createTransaction = async (req, res) => {
         });
       }
      
+      // Create Transaction (PENDING)
+      const session = await mongoose.startSession();
+      session.startTransaction()
+
+      const transaction = await TransactionModel.create([{
+        fromAccount,
+        toAccount,
+        amount,
+        idempotencyKey,
+        status: "PENDING"
+      }], { session });
+
+      const debitLedgerEntry = await LedgerModel.create([{
+        account: fromAccount,
+        amount,
+        transaction: transaction._id,
+        type: "DEBIT"
+      }], { session });
+
+      const creditLedgerEntry = await LedgerModel.create([{
+        account: toAccount,
+        amount,
+        transaction: transaction._id,
+        type: "CREDIT"
+      }], { session });
+
+      transaction.status = "COMPLETED";
+      await transaction.save({ session }); 
+      
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.status(201).json({
+        message: "Transaction completed successfully",
+        transaction,
+        ledgerEntries: [debitLedgerEntry, creditLedgerEntry]
+      });
+
 
     } 
   } catch (error) {

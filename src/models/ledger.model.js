@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const transactionSchema = new mongoose.Schema({
+const ledgerSchema = new mongoose.Schema({
   account: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Account",
@@ -43,6 +43,6 @@ ledgerSchema.pre("remove", preventLedgerModifications);
 ledgerSchema.pre("deleteOne", preventLedgerModifications);
 ledgerSchema.pre("deleteMany", preventLedgerModifications);
 
-const LedgerModel = mongoose.model("Ledger", transactionSchema);
+const LedgerModel = mongoose.model("Ledger", ledgerSchema);
 
 export default LedgerModel;
