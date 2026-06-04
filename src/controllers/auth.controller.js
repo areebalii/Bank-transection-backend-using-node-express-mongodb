@@ -1,5 +1,6 @@
 import UserModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import BlackList from "../models/blackList.model.js";
 
 /** 
   * - User Registration Controller
@@ -91,4 +92,22 @@ export const login = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
+}
+
+/** 
+  * - User logout Controller
+  * - POST /api/auth/logout
+*/
+export const Logout = async (req, res) => { 
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1]; 
+  if (!token) {
+    return res.status(400).json({ message: "No token provided" });
+  }
+
+  await BlackList.create({ token });
+
+  res.clearCookie("token", "")
+  
+  res.status(200).json({ message: "Logout successful" }); 
+
 }

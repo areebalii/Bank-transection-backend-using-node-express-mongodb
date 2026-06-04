@@ -1,4 +1,5 @@
 import UserModel from "../models/user.model.js";
+import BlackList from "../models/blackList.model.js";
 import jwt from "jsonwebtoken";
 
 
@@ -12,6 +13,11 @@ export const authMiddleware = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    const isBlackListed = await BlackList.findOne({ token });
+    if (isBlackListed) {
+      return res.status(401).json({ message: "Unauthorized: Token is blacklisted" });
     }
 
 
@@ -47,6 +53,11 @@ export const systemUserMiddleware = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    const isBlackListed = await BlackList.findOne({ token });
+    if (isBlackListed) {
+      return res.status(401).json({ message: "Unauthorized: Token is blacklisted" });
     }
 
     // 1. Verify the Token
